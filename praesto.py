@@ -14,16 +14,19 @@ class Praesto:
     cache = {}
     def __init__(self):
         self.read_config()
-        self.log("Starting Praesto")
+        self.log("Starting Praesto",'info')
         print_lock = threading.Lock()
         self.queue = Queue()
 
         os.makedirs(self.config['state_dir'],exist_ok=True)
 
-    def log(self,msg,level='debug'):
+    def log(self,msg,level='error'):
         syslog.openlog(ident=self.config['log_identity'])
-        if level == 'debug':
+        if level == 'debug' and self.config['debug_log']:
             syslog.syslog(syslog.LOG_DEBUG,msg)
+
+        if level == 'info':
+            syslog.syslog(syslog.LOG_INFO,msg)
 
         if level == 'error':
             syslog.syslog(syslog.LOG_ERR,msg)
@@ -45,7 +48,7 @@ class Praesto:
         while True:
             check = self.queue.get()
             check['changed'] = False
-            self.log("Checking host %s" % check['destination'])
+            self.log("Checking host %s" % check['destination'], 'debug')
             if check['type'] == "ping" and check['enabled']:
                 check = self.check_ping(check)
             if check['changed']:
@@ -80,8 +83,9 @@ class Praesto:
         check.update(state)
         response = os.system("ping -c 1 %s 1> /dev/null" % check['destination']) 
         check['changed'] = False
-        self.log("Checked host %s: %s" % (check['destination'],response))
+        self.log("Checked host %s: %s" % (check['destination'],response),'debug')
         if response != check['last_state'] and check['iterator'] < check['threshold']:
+            self.log("Changing state host %s to %s (%/%)" % (check['destination'],'PENDING',check['iterator'],check['threshold']))
             check['iterator'] += 1
             check['changed'] = True
             check['state'] = "PENDING"
@@ -91,8 +95,10 @@ class Praesto:
             check['last_state'] = response
             check['iterator'] = 0
             if response:
+                self.log("Changing state host %s to %s (%/%)" % (check['destination'],'UNREACHABLE',check['iterator'],check['threshold']))
                 check['state'] = "UNREACHABLE"
             else:
+                self.log("Changing state host %s to %s (%/%)" % (check['destination'],'REACHABLE',check['iterator'],check['threshold']))
                 check['state'] = "REACHABLE"
         return check
 

@@ -5,9 +5,9 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/praesto/
-ExecStart=/opt/praesto/praesto.py
-Restart=on-abort
+WorkingDirectory=/usr/local/src/praesto/
+ExecStart=/usr/local/src/praesto/praesto.py
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
