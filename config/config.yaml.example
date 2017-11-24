@@ -1,0 +1,24 @@
+threads: 8
+log_identity: praesto
+state_dir: /dev/shm/praesto
+debug_log: False
+check_interval: 60
+checks:
+- id: 0
+  enabled: True
+  type: ping
+  destination: 8.8.8.8 
+  description: Google DNS resolver 
+  threshold: 5
+  notify: 
+  - telegram0
+notifications:
+  telegram0: 
+    type: telegram
+    telegram_chat_id: CHAT_ID
+    telegram_token: BOT_TOKEN
+  sms0:
+    type: cheapconnect
+    cc_token: UUID_FROM_CHEAPCONNECT
+    sender: SENDER_NUMBER
+    recipient: RECIPIENT_NUMBER
