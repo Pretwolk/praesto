@@ -152,7 +152,7 @@ class Praesto:
                 print(exc)
                 self.log(exc)
     
-    def read_config(self,p='config/dev-config.yaml'):
+    def read_config(self,p='config/config.yaml'):
         self.config = self.read_yaml(p)
 
     def write_config(self,p='config/config.yaml'):
