@@ -95,10 +95,10 @@ class Praesto:
             check['last_state'] = response
             check['iterator'] = 0
             if response:
-                self.log("Changing state host %s to %s (%/%)" % (check['destination'],'UNREACHABLE',check['iterator'],check['threshold']))
+                self.log("Changing state host %s to %s (%s/%s)" % (check['destination'],'UNREACHABLE',check['iterator'],check['threshold']))
                 check['state'] = "UNREACHABLE"
             else:
-                self.log("Changing state host %s to %s (%/%)" % (check['destination'],'REACHABLE',check['iterator'],check['threshold']))
+                self.log("Changing state host %s to %s (%s/%s)" % (check['destination'],'REACHABLE',check['iterator'],check['threshold']))
                 check['state'] = "REACHABLE"
         return check
 
@@ -122,9 +122,9 @@ class Praesto:
         params = { 'chat_id': chat_id, 'disable_web_page_preview': 1, 'text': message }
         r = requests.get(telegram_url, data=params)
         if r.status_code != 200:
-            print(r.text)
+            self.log(r.text,'info')
         else:
-            print("Notification sent")
+            self.log('Notification sent to %s' % chat_id,'info')
 
     def notify_cheapconnect(self,token,sender,recipient,message):
         message = quote_plus(message)
@@ -132,9 +132,9 @@ class Praesto:
         cheapconnect_url = "%s/%s/%s/%s" % (cheapconnect_url,sender,recipient,message)
         r = requests.get(cheapconnect_url)
         if r.status_code != 200:
-            print(r.text)
+            self.log(r.text,'info')
         else:
-            print("Notification sent")
+            self.log('Notification sent to %s' % (recipient),'info')
 
     def read_yaml(self,p):
         with open(p,'r') as fh:
@@ -142,17 +142,17 @@ class Praesto:
                 return yaml.load(fh)
             except yaml.YAMLError as exc:
                 print(exc)
-                sys.exit(1000)
+                self.log(exc)
 
     def write_yaml(self,p, c):
         with open(p,'w') as fh:
             try:
                 fh.write(yaml.dump(c, indent=4, default_flow_style=False))
-            except Exception as e:
-                print(e)
-                sys.exit(1001)
+            except Exception as exc:
+                print(exc)
+                self.log(exc)
     
-    def read_config(self,p='config/config.yaml'):
+    def read_config(self,p='config/dev-config.yaml'):
         self.config = self.read_yaml(p)
 
     def write_config(self,p='config/config.yaml'):
