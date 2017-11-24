@@ -1,0 +1,13 @@
+[Unit]
+Description=Praesto
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/praesto/
+ExecStart=/opt/praesto/praesto.py
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
