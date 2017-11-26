@@ -18,6 +18,8 @@ pip3 install jinja2 pyyaml requests yaml
 ```
 git clone https://github.com/Pretwolk/praesto.git /usr/local/src/
 cd praesto
+cp config/config.yaml.example config/config.yaml
+vim config/config.yaml
 cp init/praesto.systemd /etc/systemd/system/
 systemctl enable presto
 systemctl start presto

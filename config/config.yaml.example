@@ -1,6 +1,11 @@
 threads: 8
 log_identity: praesto
 state_dir: /dev/shm/praesto
+report_interval: 24
+report_notifications:
+- group: *
+  notify: 
+  - telegram0
 debug_log: False
 check_interval: 60
 checks:

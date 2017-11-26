@@ -7,11 +7,14 @@ import requests
 import time
 from jinja2 import Template
 from urllib.parse import urlencode, quote_plus
+from datetime import datetime
 import syslog
 
 class Praesto:
     config = {}
     cache = {}
+    notify_template = Template("Host: {{ check.destination }}\nDescription: {{ check.description }}\nType: {{ check.type }}\nState: {{ check.state }}")
+    report_template = Template("Host: {{ check.destination }}\nDescription: {{ check.description }}\nType: {{ check.type }}\nHistory:\n{% for r in check.report_history %}- {{ r.timestamp }}: {{ r.state }}\n{% endfor %}")
     def __init__(self):
         self.read_config()
         self.log("Starting Praesto",'info')
@@ -54,7 +57,7 @@ class Praesto:
             if check['changed']:
                 self.set_state(check)
             if check['changed'] and check['iterator'] == 0:
-                self.send_notifications(check)
+                self.notify(check)
             self.queue.task_done()
     
     # 3
@@ -85,7 +88,7 @@ class Praesto:
         check['changed'] = False
         self.log("Checked host %s: %s" % (check['destination'],response),'debug')
         if response != check['last_state'] and check['iterator'] < check['threshold']:
-            self.log("Changing state host %s to %s (%/%)" % (check['destination'],'PENDING',check['iterator'],check['threshold']))
+            self.log("Changing state host %s to %s (%s/%s)" % (check['destination'],'PENDING',check['iterator'],check['threshold']))
             check['iterator'] += 1
             check['changed'] = True
             check['state'] = "PENDING"
@@ -102,16 +105,16 @@ class Praesto:
                 check['state'] = "REACHABLE"
         return check
 
-    def send_notifications(self,check):
+    def notify(self,check):
         if 'notify' not in check:
             return True
 
-        template = Template("Host: {{ check.destination }}\nDescription: {{ check.description }}\nType: {{ check.type }}\nState: {{ check.state }}")
-
-        message = template.render(check=check)
-        
+        message = self.notify_template.render(check=check)
         for n in check['notify']:
             notify = self.config['notifications'][n]
+            self.send_notifications(notify,message)
+    
+    def send_notifications(self,notify, message):
             if notify['type'] == "telegram":
                 self.notify_telegram(notify['telegram_token'], notify['telegram_chat_id'],message)
             if notify['type'] == "cheapconnect":
@@ -122,7 +125,8 @@ class Praesto:
         params = { 'chat_id': chat_id, 'disable_web_page_preview': 1, 'text': message }
         r = requests.get(telegram_url, data=params)
         if r.status_code != 200:
-            self.log(r.text,'info')
+            self.log("%s/%s" % (telegram_url, params))
+            self.log(r.text,'error')
         else:
             self.log('Notification sent to %s' % chat_id,'info')
 
@@ -135,6 +139,24 @@ class Praesto:
             self.log(r.text,'info')
         else:
             self.log('Notification sent to %s' % (recipient),'info')
+
+    def reporting(self):
+        report_window = time.time() - self.config['reporting_interval']
+        for report in self.config['reports']:
+            message = []
+            for check in self.config['checks']:
+                if ('groups' in check and report['group'] in check['groups']) or report['group'] == "_ALL":
+                    check = self.get_state(check) 
+                    check['report_history'] = []
+                    for h in check['history']:
+                        if h['timestamp'] > report_window: 
+                            h['timestamp'] = datetime.fromtimestamp(h['timestamp']).strftime('%Y/%m/%d %H:%M:%S')
+                            check['report_history'].append(h) 
+                    message.append(self.report_template.render(check=check))
+            if len(message) > 0:
+                for r in report['notify']:
+                    n = self.config['notifications'][r]
+                    self.send_notifications(n, "---\n".join(message))
 
     def read_yaml(self,p):
         with open(p,'r') as fh:
@@ -154,15 +176,29 @@ class Praesto:
     
     def read_config(self,p='config/config.yaml'):
         self.config = self.read_yaml(p)
+        self.config['reporting_interval'] *= 3600
 
     def write_config(self,p='config/config.yaml'):
         return self.write_yaml(p,self.config)
 
 if __name__ == "__main__":
     praesto = Praesto()
+    time_counter = time.time()
+
     while True:
         praesto.read_config()
         run_time,ex = praesto.run()
+        run_time,ex = praesto.run()
+        run_time,ex = praesto.run()
         praesto.log("Finished a check run in %s" % (run_time))
         praesto.log("Sleeping for %s" % (praesto.config['check_interval']))
+
+        now = time.time()
+        diff = now - time_counter
+        if diff > praesto.config['reporting_interval']:
+            praesto.log("Starting reporting diff(%s)" % (diff),"info")
+            praesto.reporting()
+            time_counter = now
+            praesto.log("Reports sent","info")
+    
         time.sleep(praesto.config['check_interval'])
