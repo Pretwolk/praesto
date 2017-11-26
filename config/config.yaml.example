@@ -3,8 +3,11 @@ log_identity: praesto
 state_dir: /dev/shm/praesto
 report_interval: 24
 report_notifications:
-- group: *
+- group: "_ALL"
   notify: 
+  - telegram0
+- group: google
+  notify:
   - telegram0
 debug_log: False
 check_interval: 60
@@ -15,6 +18,8 @@ checks:
   destination: 8.8.8.8 
   description: Google DNS resolver 
   threshold: 5
+  groups:
+  - google
   notify: 
   - telegram0
 notifications:
