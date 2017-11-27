@@ -30,7 +30,6 @@ class Praesto:
             syslog.syslog(syslog.LOG_DEBUG,msg)
 
         if level == 'info':
-            print(msg)
             syslog.syslog(syslog.LOG_INFO,msg)
 
         if level == 'error':
@@ -192,7 +191,6 @@ if __name__ == "__main__":
         praesto.read_config()
         run_time,ex = praesto.run()
         praesto.log("Finished a check run in %s" % (run_time))
-        praesto.log("Sleeping for %s" % (praesto.config['check_interval']))
 
         now = time.time()
         diff = now - time_counter
