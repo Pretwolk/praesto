@@ -26,12 +26,15 @@ class Praesto:
     def log(self,msg,level='error'):
         syslog.openlog(ident=self.config['log_identity'])
         if level == 'debug' and self.config['debug_log']:
+            print(msg)
             syslog.syslog(syslog.LOG_DEBUG,msg)
 
         if level == 'info':
+            print(msg)
             syslog.syslog(syslog.LOG_INFO,msg)
 
         if level == 'error':
+            print(msg)
             syslog.syslog(syslog.LOG_ERR,msg)
 
     def run(self):
@@ -187,8 +190,6 @@ if __name__ == "__main__":
 
     while True:
         praesto.read_config()
-        run_time,ex = praesto.run()
-        run_time,ex = praesto.run()
         run_time,ex = praesto.run()
         praesto.log("Finished a check run in %s" % (run_time))
         praesto.log("Sleeping for %s" % (praesto.config['check_interval']))
