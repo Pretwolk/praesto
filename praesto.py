@@ -55,7 +55,9 @@ class Praesto:
             check['changed'] = False
             self.log("Checking host %s" % check['destination'], 'debug')
             if check['type'] == "ping" and check['enabled']:
-                check = self.check_ping(check)
+                check = self.check_ping(check,version=4)
+            if check['type'] == "ping6" and check['enabled']:
+                check = self.check_ping(check,version=6)
             if check['changed']:
                 self.set_state(check)
             if check['changed'] and check['iterator'] == 0:
@@ -83,10 +85,14 @@ class Praesto:
         return self.read_yaml(p)
  
     # 1
-    def check_ping(self,check):
+    def check_ping(self,check, version):
         state = self.get_state(check)
         check.update(state)
-        response = os.system("ping -c 1 %s 1> /dev/null" % check['destination']) 
+        if version == 4:
+            response = os.system("ping -c 1 %s 1> /dev/null" % check['destination']) 
+        elif version == 6:
+            response = os.system("ping6 -c 1 %s 1> /dev/null" % check['destination']) 
+
         check['changed'] = False
         self.log("Checked host %s: %s" % (check['destination'],response),'debug')
         if response and response != check['last_state'] and check['iterator'] < check['threshold']:

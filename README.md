@@ -11,7 +11,7 @@ Praesto is developed on Debian stable using Python3.6
 ## Install requirements
 ```
 apt install python3 python3-pip
-pip3 install jinja2 pyyaml requests yaml
+pip3 install jinja2 pyyaml requests
 ```
 
 ## Install Praesto
