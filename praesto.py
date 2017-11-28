@@ -94,7 +94,7 @@ class Praesto:
             check['iterator'] += 1
             check['changed'] = True
             check['state'] = "PENDING REACHABLE"
-        elif not response and  response !+ check['last_state'] and check['iterator'] < check['threshold']:
+        elif not response and  response != check['last_state'] and check['iterator'] < check['threshold']:
             self.log("Changing state host %s to PENDING UNREACHABLE (%s/%s)" % (check['destination'],check['iterator'],check['threshold']))
             check['iterator'] += 1
             check['changed'] = True
