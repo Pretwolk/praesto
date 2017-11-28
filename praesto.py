@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, subprocess, yaml, sys
+import os, subprocess, yaml, sys, platform
 import threading
 from queue import Queue
 import requests
@@ -13,8 +13,8 @@ import syslog
 class Praesto:
     config = {}
     cache = {}
-    notify_template = Template("Host: {{ check.destination }}\nDescription: {{ check.description }}\nType: {{ check.type }}\nState: {{ check.state }}")
-    report_template = Template("Host: {{ check.destination }}\nDescription: {{ check.description }}\nType: {{ check.type }}\nHistory:\n{% for r in check.report_history %}- {{ r.timestamp }}: {{ r.state }}\n{% endfor %}")
+    notify_template = Template("Praesto node: {{ check.node }}\nHost: {{ check.destination }}\nDescription: {{ check.description }}\nType: {{ check.type }}\nState: {{ check.state }}")
+    report_template = Template("Praesto node: {{ check.node }}\nHHost: {{ check.destination }}\nDescription: {{ check.description }}\nType: {{ check.type }}\nHistory:\n{% for r in check.report_history %}- {{ r.timestamp }}: {{ r.state }}\n{% endfor %}")
     def __init__(self):
         self.read_config()
         self.log("Starting Praesto",'info')
@@ -24,7 +24,7 @@ class Praesto:
         os.makedirs(self.config['state_dir'],exist_ok=True)
 
     def log(self,msg,level='error'):
-        syslog.openlog(ident=self.config['log_identity'])
+        syslog.openlog(ident="%s_%s" % (self.config['hostname'],self.config['log_identity']))
         if level == 'debug' and self.config['debug_log']:
             print(msg)
             syslog.syslog(syslog.LOG_DEBUG,msg)
@@ -53,6 +53,7 @@ class Praesto:
         while True:
             check = self.queue.get()
             check['changed'] = False
+            check['node'] = self.config['hostname']
             self.log("Checking host %s" % check['destination'], 'debug')
             if check['type'] == "ping" and check['enabled']:
                 check = self.check_ping(check,version=4)
@@ -193,6 +194,7 @@ class Praesto:
     def read_config(self,p='config/config.yaml'):
         self.config = self.read_yaml(p)
         self.config['reporting_interval'] *= 3600
+        self.config['hostname'] = platform.node()
 
     def write_config(self,p='config/config.yaml'):
         return self.write_yaml(p,self.config)
