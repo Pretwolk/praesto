@@ -89,12 +89,17 @@ class Praesto:
         response = os.system("ping -c 1 %s 1> /dev/null" % check['destination']) 
         check['changed'] = False
         self.log("Checked host %s: %s" % (check['destination'],response),'debug')
-        if response != check['last_state'] and check['iterator'] < check['threshold']:
-            self.log("Changing state host %s to %s (%s/%s)" % (check['destination'],'PENDING',check['iterator'],check['threshold']))
+        if response and response != check['last_state'] and check['iterator'] < check['threshold']:
+            self.log("Changing state host %s to PENDING REACHABLE (%s/%s)" % (check['destination'],check['iterator'],check['threshold']))
             check['iterator'] += 1
             check['changed'] = True
-            check['state'] = "PENDING"
-        if (response != check['last_state'] and check['iterator'] == check['threshold'] or
+            check['state'] = "PENDING REACHABLE"
+        elif not response and  response !+ check['last_state'] and check['iterator'] < check['threshold']:
+            self.log("Changing state host %s to PENDING UNREACHABLE (%s/%s)" % (check['destination'],check['iterator'],check['threshold']))
+            check['iterator'] += 1
+            check['changed'] = True
+            check['state'] = "PENDING UNREACHABLE"
+        elif (response != check['last_state'] and check['iterator'] == check['threshold'] or
             response == check['last_state'] and check['iterator']):
             check['changed'] = True
             check['last_state'] = response
@@ -105,6 +110,8 @@ class Praesto:
             else:
                 self.log("Changing state host %s to %s (%s/%s)" % (check['destination'],'REACHABLE',check['iterator'],check['threshold']))
                 check['state'] = "REACHABLE"
+        else:
+            self.log('This should not happen','error')
         return check
 
     def notify(self,check):
