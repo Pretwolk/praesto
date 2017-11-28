@@ -81,7 +81,7 @@ class Praesto:
             state['state'] = "UNKNOWN"
             state['history'] = []
             state['id'] = check['id']
-            state['iterator'] = 0
+            state['iterator'] = 1
             return state
         return self.read_yaml(p)
  
@@ -110,7 +110,7 @@ class Praesto:
             response == check['last_state'] and check['iterator']):
             check['changed'] = True
             check['last_state'] = response
-            check['iterator'] = 0
+            check['iterator'] = 1
             if response:
                 self.log("Changing state host %s to %s (%s/%s)" % (check['destination'],'UNREACHABLE',check['iterator'],check['threshold']))
                 check['state'] = "UNREACHABLE"
