@@ -165,6 +165,8 @@ class Praesto:
                 if ('groups' in check and report['group'] in check['groups']) or report['group'] == "_ALL":
                     check = self.get_state(check) 
                     check['report_history'] = []
+                    if len(check['history']) < 1:
+                        continue;
                     for h in check['history']:
                         if h['timestamp'] > report_window: 
                             h['timestamp'] = datetime.fromtimestamp(h['timestamp']).strftime('%Y/%m/%d %H:%M:%S')
