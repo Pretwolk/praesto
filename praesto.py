@@ -61,7 +61,7 @@ class Praesto:
                 check = self.check_ping(check,version=6)
             if check['changed']:
                 self.set_state(check)
-            if check['changed'] and check['iterator'] == 0:
+            if check['changed'] and check['iterator'] == 1:
                 self.notify(check)
             self.queue.task_done()
     
@@ -210,12 +210,5 @@ if __name__ == "__main__":
         run_time,ex = praesto.run()
         praesto.log("Finished a check run in %s" % (run_time))
 
-        now = time.time()
-        diff = now - time_counter
-        if diff > praesto.config['reporting_interval']:
-            praesto.log("Starting reporting diff(%s)" % (diff),"info")
-            praesto.reporting()
-            time_counter = now
-            praesto.log("Reports sent","info")
-    
+        print(run_time,praesto.config['check_interval']) 
         time.sleep(praesto.config['check_interval'])
